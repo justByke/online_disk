@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #define SERVER_PORT 8888
-#define BUFFER_SIZE 8888
+#define BUFFER_SIZE 1024
 
 #define FILE_PUSH 1;
 #define FILE_PULL 2;
@@ -233,14 +233,14 @@ void push_file(int connfd,struct sockaddr_in clientaddr)
 	char s[32];
 	bzero(s,32);
 	int file_len = 0;
-	int fd = read_line(connfd,s,32);
+	int fd = recv(connfd,s,32,0);
 	if(fd == 0)
 	{
 		printf("客户端断开连接\n");
 		exit(0);
 	}
 	file_len = atoi(s);
-	//printf("%d\n",file_len);
+//	printf("%d\n",file_len);
 	char buf[BUFFER_SIZE];
 	int data_len;
 	FILE *fp = NULL;
@@ -255,7 +255,7 @@ void push_file(int connfd,struct sockaddr_in clientaddr)
 	bzero(buf,BUFFER_SIZE);
 	while(data_len = recv(connfd,buf,BUFFER_SIZE,0)) {
 	
-			write(1, buf, data_len);
+	//		write(1, buf, data_len);
 			if(data_len < 0) {
 				perror("data recv mistake\n");
 				exit(-1);
@@ -276,7 +276,7 @@ void push_file(int connfd,struct sockaddr_in clientaddr)
 			}
 			bzero(buf,BUFFER_SIZE);
 			len = len + data_len;
-			printf("%d\n",len);
+//			printf("%d\n",len);
 			if(len >= file_len)
 				break;
 	}
