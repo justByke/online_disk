@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <string>
 #include <mysql/mysql.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <time.h>
@@ -17,6 +19,8 @@
 #define FILE_LIST 3;
 #define FILE_SENDTO 4;
 #define FILE_DELETE 5;
+
+using namespace std;
 
 struct User
 {
@@ -33,35 +37,7 @@ struct Control
 
 void print_time(char *ch);
 int mysql_check_login(struct User user);
-void push_file(int connfd,struct sockaddr_in clientaddr);
-int read_line(int fd, char *vptr, ssize_t maxlen)
-{
-	ssize_t n, rc;
-	char c, *ptr;
-
-	ptr = vptr;
-	for (n = 1; n < maxlen; n++)
-	{
-		if ((rc = read(fd, &c, 1)) == 1)
-		{
-			*ptr++ = c;
-			if (c == '\n')
-				break;
-		}
-		else if (rc == 0)
-		{
-			*ptr = 0;
-			return(n - 1);
-		} 
-		else
-		{
-			return(-1);
-		}
-	}
-	*ptr = 0;
-	return(n);
-}
-
+void push_file(int connfd,struct sockaddr_in clientaddr,struct User user,char file[64]);
 
 int main(int argc,char **argv)
 {
@@ -137,7 +113,7 @@ int main(int argc,char **argv)
 				{
 					printf("%s%s\n",cmd,file);
 					if(strcmp(cmd,"push") == 0)
-						push_file(connfd,clientaddr);
+						push_file(connfd,clientaddr,user,file);
 				}
 				/*
 				while(1)	
@@ -228,8 +204,8 @@ int mysql_check_login(struct User user)
 }
 
 
-void push_file(int connfd,struct sockaddr_in clientaddr)
-{
+void push_file(int connfd,struct sockaddr_in clientaddr,struct User user,char file[64])
+{ 
 	char s[32];
 	bzero(s,32);
 	int file_len = 0;
@@ -240,22 +216,35 @@ void push_file(int connfd,struct sockaddr_in clientaddr)
 		exit(0);
 	}
 	file_len = atoi(s);
-//	printf("%d\n",file_len);
 	char buf[BUFFER_SIZE];
 	int data_len;
 	FILE *fp = NULL;
-	if((fp = fopen("data","wb"))==NULL)
+
+	if((access(user.user_name,F_OK)) < 0)
+	{
+		if((mkdir(user.user_name,S_IRWXU)) < 0)
+		{
+			perror("mkdir error\n");
+			exit(-1);
+		}
+	}
+	
+	char commd[64] = "./";
+	strcat(commd,user.user_name);
+	
+	if(chdir(commd) < 0)
+		perror("chdir error\n");
+	if((fp = fopen(file,"wb"))==NULL)
 	{
 		perror("FILE open failed\n");
 		exit(-1);
 	}
-	int size = 0;// block
 
+	int size = 0;// block
 	int len = 0;
 	bzero(buf,BUFFER_SIZE);
 	while(data_len = recv(connfd,buf,BUFFER_SIZE,0)) {
 	
-	//		write(1, buf, data_len);
 			if(data_len < 0) {
 				perror("data recv mistake\n");
 				exit(-1);
