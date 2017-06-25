@@ -1,142 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <netdb.h>//gethostbyname
-#include <unistd.h>//close
-#include <time.h>
-#include <iostream>
-#include <string>
-
-using namespace std;
-
-#define SERVER_PORT 8888
-#define BUFFER_SIZE 1024
-
-struct Command
-{
-	char cmd[20];
-	char file[64];
-};
-
-struct Addr
-{
-	char host[64];
-	int port;
-};
-
-struct User 
-{
-	int uid;
-	char user_name[20];
-	char passwd[64];
-};
-
-int file_push(int sockfd,char *filename)
-{
-	char s[32];
-	memset(s,'0',32);
-	char temp[32];
-	FILE *fp;
-
-	if((fp =fopen(filename,"rb")) == NULL) {
-		perror("file open failed\n");
-		exit(-1);
-	}
-
-	fseek(fp,0,SEEK_END);
-	int file_len = ftell(fp);
-//	printf("%d\n",file_len);
-	int i = 31;
-	while(file_len != 0)
-	{
-		s[i--] = (file_len % 10)+48;
-		file_len = file_len / 10;
-	}	
-	//printf("%s\n",s);
-	send(sockfd,s,strlen(s),0);
-	rewind(fp);
-
-	char buf[BUFFER_SIZE];
-	bzero(buf,BUFFER_SIZE);
-	int len = 0;
-	while((len = fread(buf,1,BUFFER_SIZE,fp)) > 0)
-	{
-		//write(1, buf, BUFFER_SIZE);
-
-		if(send(sockfd,buf,len,0) < 0)
-		{
-			perror("send file failed\n");
-			exit(-1);
-		}
-
-		bzero(buf,BUFFER_SIZE);
-		printf(".");
-	}
-
-	fclose(fp);
-
-	//close(sockfd);
-	return 0;
-}
-
-int check_login(int sockfd,struct User *user)
-{
-
-	if(send(sockfd,(char *)user,sizeof(struct User),0) < 0)
-	{
-		perror("发送数据失败\n");
-		exit(-1);
-	}
-
-	bzero(user,sizeof(struct User));
-
-	if(recv(sockfd,(char *)user,sizeof(struct User),0) < 0)
-	{
-		perror("接收数据失败\n");
-		exit(-1);
-	}
-
-	printf("获取后用户名：%s,密码：%s,uid：%d\n",user->user_name,user->passwd,user->uid);
-
-
-	return user->uid;
-}
-
-int socket_connect(struct Addr addr)
-{
-	struct sockaddr_in servaddr;
-	struct hostent *host;
-	int sockfd;
-
-	host = gethostbyname(addr.host);
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(addr.port);
-	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	if(host == NULL)
-	{
-		perror("IP 获取失败\n");
-		exit(-1);
-	}
-
-	if((sockfd = socket(AF_INET,SOCK_STREAM,0)) == -1)
-	{
-		perror("socket 创建失败\n");
-		exit(-1);
-	}
-
-	if(connect(sockfd,(struct sockaddr*)&servaddr,sizeof(servaddr)) == -1)
-	{
-		perror("connect 失败\n");
-		exit(-1);
-	}
-
-	return sockfd;
-}
+#include "head.h"
 
 int main(int argc,char **argv)
 {
@@ -165,6 +27,31 @@ int main(int argc,char **argv)
 		exit(-1);
 	}
 	
+	char s[32];
+	bzero(s,32);
+	recv(sockfd,s,32,0);
+	s[32] = '\0';
+//	printf("s: %s\n",s);
+	int file_len = atoi(s);
+//	printf("file_len : %d\n",file_len);
+	char buf[BUFFER_SIZE];
+	bzero(buf,BUFFER_SIZE);
+	int data_len;
+	int len = 0;
+	while(data_len = recv(sockfd,buf,BUFFER_SIZE,0))
+	{
+		if(data_len < 0)
+		{
+			perror("data recv error\n");
+			exit(-1);
+		}
+		fprintf(stdout,buf);
+		bzero(buf,BUFFER_SIZE);
+		len = len + data_len;
+		if(len >= file_len)
+			break;
+	}
+
 	char cmd[BUFFER_SIZE];
 	struct Command command;
 	while(fgets(cmd,BUFFER_SIZE,stdin) != NULL)
