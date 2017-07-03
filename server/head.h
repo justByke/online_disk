@@ -2,6 +2,7 @@
 #define HEAD_H_
 
 #include <iostream>
+#include <exception>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-
+#define BUFFER_SIZE 256
 
 using namespace std;
 
@@ -45,7 +46,12 @@ class SDisk
 
 		int disk_quit();//退出登录
 
+		int disk_sendcmd();
 		int disk_recvcmd();//接收指令 
+
+		void set_socket(int socket);
+
+		char* get_resp();
 	private:
 		char user_name[32];//用户名
 
@@ -53,9 +59,9 @@ class SDisk
 
 		int mysocket;//socket id
 
-		char m_cmd[256];//存放指令
+		char m_cmd[BUFFER_SIZE];//存放指令
 
-		char m_resp[256];//存放返回语句
+		char m_resp[BUFFER_SIZE];//存放返回语句
 };
 
 

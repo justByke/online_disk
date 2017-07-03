@@ -36,8 +36,8 @@ int CDisk:: user_login()          //user login online_disk
 {
     char user_name[32];
     char user_pass[32];
-    string res = " ";
-    string again = "";
+    char res[32];
+    char again[32];
 
 LOGIN:
     cout << "Please input user_name" << endl;
@@ -45,12 +45,13 @@ LOGIN:
     cout << "Please input password" << endl;
     scanf("%s", &user_pass);
 
+    memset(m_cmd, 0, BUFF_SIZE);
     sprintf(m_cmd, "%s %s\n", user_name, user_pass);
     disk_sendcmd();        //发送指令
     disk_recvinfo();
     sscanf(m_resp, "%s", &res);
-    if(res == "-1") {
-        perror("Login error!");
+    if(strcmp(res,"-1") == 0) {
+        cout<<"Login error!"<<endl;
         cout << "Login again? YES:again, else quit!" << endl;
         cin >> again;
         if (again == "YES") {
