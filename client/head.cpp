@@ -36,19 +36,31 @@ int CDisk:: user_login()          //user login online_disk
 {
     char user_name[32];
     char user_pass[32];
+    int res = 0;
+    string again = "";
 
+LOGIN:
     cout << "Please input user_name" << endl;
     scanf("%s", &user_name);
     cout << "Please input password" << endl;
     scanf("%s", &user_pass);
 
-
-    cout << user_name << user_pass << endl;
-
     sprintf(m_cmd, "%s %s\n", user_name, user_pass);
-   // send(sockfd, m_cmd, strlen(m_cmd), 0);
-   // recv(sockfd, m_resp, BUFF_SIZE, 0);
-
+    disk_sendcmd();        //发送指令
+    disk_recvinfo();
+    sscanf(m_resp, "%d", &res);
+    if(res == -1) {
+        perror("Login error!");
+        cout << "Login again? YES:again, else quit!" << endl;
+        cin >> again;
+        if (again == "YES") {
+            goto LOGIN;
+        } else {
+            cout << "Welcome login again!" << endl;
+            exit(1);
+        }
+    }
+     cout << "Login success!" << endl;
 }
 
 
@@ -58,11 +70,31 @@ int disk_cd();             //更改目录
 int disk_cdup();           //返回上层目录
 int disk_mkdir();          //创建目录
 int disk_rmdir();          //删除目录
+
+
 int disk_upload();         //上传文件
 int disk_download();       //下载文件
 int disk_quit();           //退出登录
-int disk_sendcmd();        //发送指令
-//int disk_recvinfo();
+
+
+int CDisk:: disk_sendcmd()        //发送指令
+{
+    try {
+        send(sockfd, m_cmd, strlen(m_cmd), 0);
+    }catch(exception e) {
+        cout << e.what() << endl;
+    }
+}
+int CDisk:: disk_recvinfo()
+{
+    memset(m_resp, 0, BUFF_SIZE);
+    try {
+        recv(sockfd, m_resp, BUFF_SIZE, 0);
+    } catch(exception e) {
+         cout << e.what() << endl;
+    }
+
+}
 
 
 
