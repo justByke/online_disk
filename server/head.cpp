@@ -67,30 +67,34 @@ int SDisk::user_login()
 	return 0;
 }
 
-int SDisk::disk_pwd()
+int SDisk::disk_ls()
 {
 	DIR * dir;
 	struct dirent *ptr;
 	//FILE *dp = fopen("pwd.txt","w");//该文件指针指向保存目录中的文件名
 
-	if(access(user_name,0) < 0)
+	char buffer[32];
+	if(strcmp(getcwd(buffer,32),path) == 0)
 	{
-		if(mkdir(user_name,0700) <0)
+		if(access(user_name,0) < 0)
 		{
-			cout<<"mkdir error"<<endl;
-			return -1;
+			if(mkdir(user_name,0700) <0)
+			{
+				cout<<"mkdir error"<<endl;
+				return -1;
+			}
+			
+			dir = opendir(user_name);
 		}
-		
-		dir = opendir(user_name);
-		ofstream ofile;
-		ofile.open("pwd.txt");
-		while((ptr = readdir(dir)) != NULL)
-		{
-			ofile<<ptr->d_name<<endl;			
-		}
-		ofile<<flush;
-		ofile.close();
 	}
+	ofstream ofile;
+	ofile.open("pwd.txt");
+	while((ptr = readdir(dir)) != NULL)
+	{
+		ofile<<ptr->d_name<<endl;			
+	}
+	ofile<<flush;
+	ofile.close();
 
 	return 0;
 }

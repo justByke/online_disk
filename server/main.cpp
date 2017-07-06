@@ -30,7 +30,7 @@ int main()
 				 *子进程负责服务器的主要功能实现
 				 *父进程主要负责接受客户端的连接
 				 */
-				child_process(); 
+				child_process(connfd); 
 			}
 			else
 			{

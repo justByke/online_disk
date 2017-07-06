@@ -1,41 +1,61 @@
 #include "head.h"
 
-void child_process(int sockfd)
+void child_process(int connfd)
 {
+
 	chdir(path);
-	pid_t pid;
-	struct sockaddr_in clientaddr;
-	socklen_t  len = sizeof(clientaddr);
-	int connfd = accept(sockfd,(struct sockaddr *)&clientaddr,&len);
-	if(connfd == -1)
+	SDisk disk_server;
+	disk_server.set_socket(connfd);
+	disk_server.user_login();
+
+	disk_server.disk_recvcmd();
+	while(strcmp(disk_server.get_resp(),"quit") != 0)
 	{
-		perror("accept failed\n");
-		continue;
-	}
-	else 
-	{
-		cout<<"客户端链接成功"<<endl;
-
-		pid = fork();
-		if(pid < 0)
+		if(strcmp(disk_server.get_recmd(),"push") == 0)
 		{
-			perror("fork failed\n");
+		//	disk_server.disk_upload();
 		}
-		else if(pid == 0)
+		else if(strcmp(disk_server.get_recmd(),"download") == 0)
 		{
-			SDisk disk_server;
-			disk_server.set_socket(connfd);
-			disk_server.user_login();
-
-			disk_server.disk_recvcmd();
-			while(strcmp(disk_server.get_resp(),"quit") != 0)
-			{
-
-			}
+		//	disk_server.disk_download();
 		}
-		else
+		else if(strcmp(disk_server.get_recmd(),"ls") == 0)
 		{
-			close(connfd);
+			disk_server.disk_ls();
 		}
+		else if(strcmp(disk_server.get_recmd(),"cd") == 0)
+		{
+			/*
+			 *if(cd dir)
+			 *	disk_server.disk_cd(dir);
+			 *else if(cd ..)
+			 *	disk_server.disk_cdup();
+			 *
+			 */
+		}
+		else if(strcmp(disk_server.get_recmd(),"rm") == 0)
+		{
+			/*
+			 *if(rm -r dir)
+			 *	disk_server.disk_rmdir(dir);
+			 *if(rm file)
+			 *	disk_server.disk_rmfile(file);
+			 *
+			 */
+		}	
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

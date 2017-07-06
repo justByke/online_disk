@@ -19,7 +19,10 @@
 
 #define BUFFER_SIZE 256
 
-const char* path = "/root/online_disk.1.1/server/user_file";
+static const char* path = "/root/online_disk.1.1/server/user_file";
+
+int socket_connect();
+void child_process(int connfd);
 
 using namespace std;
 
@@ -34,7 +37,7 @@ class SDisk
 
 		int user_login();//user login online_disk
 
-		int disk_pwd();//显示当前目录
+		int disk_ls();//显示当前目录
 
 		int disk_cd(const char* dir);//更改目录
 
