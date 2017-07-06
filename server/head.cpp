@@ -67,36 +67,46 @@ int SDisk::user_login()
 	return 0;
 }
 
-int socket_connect()
+int SDisk::disk_pwd()
 {
-	struct sockaddr_in addr;
-	bzero(&addr,sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(8888);
-	addr.sin_addr.s_addr = htons(INADDR_ANY);
-	
-	int sockfd = socket(AF_INET,SOCK_STREAM,0);
-	if(sockfd < 0)
-		return -1;
-	
-	if((bind(sockfd,(struct sockaddr *)&addr,sizeof(addr))) == -1)
-		return -1;
+	DIR * dir;
+	struct dirent *ptr;
+	//FILE *dp = fopen("pwd.txt","w");//该文件指针指向保存目录中的文件名
 
-	if(listen(sockfd,20))
-		return -1;
+	if(access(user_name,0) < 0)
+	{
+		if(mkdir(user_name,0700) <0)
+		{
+			cout<<"mkdir error"<<endl;
+			return -1;
+		}
+		
+		dir = opendir(user_name);
+		ofstream ofile;
+		ofile.open("pwd.txt");
+		while((ptr = readdir(dir)) != NULL)
+		{
+			ofile<<ptr->d_name<<endl;			
+		}
+		ofile<<flush;
+		ofile.close();
+	}
 
-	return sockfd;
+	return 0;
 }
+
 void SDisk::set_socket(int socket)
 {
 	mysocket = socket;
 }
+
 int SDisk::disk_recvcmd()
 {
 	memset(m_resp,0,BUFFER_SIZE);
 	try
 	{
 		recv(mysocket,m_resp,BUFFER_SIZE,0);
+		sscanf(m_resp,"%[^ ]",m_recmd);//  取m_resp中遇到空格为止的字符串
 	}
 	catch (exception& e)
 	{
@@ -111,54 +121,10 @@ char* SDisk::get_resp()
 	return m_resp;
 }
 
-int main()
+char* SDisk::get_recmd()
 {
-	int sockfd = socket_connect();
-
-	while(1)
-	{
-		pid_t pid;
-		struct sockaddr_in clientaddr;
-		socklen_t len = sizeof(clientaddr);
-		int connfd = accept(sockfd,(struct sockaddr *)&clientaddr,&len);
-		if(connfd == -1)
-		{
-			perror("accept failed\n");
-			continue;
-		}
-		else
-		{
-			cout<<"客户端连接成功"<<endl;
-
-			pid = fork();
-			if(pid < 0)
-			{
-				perror("fork failed\n");
-			}
-			else if(pid == 0)
-			{
-				SDisk disk_server;
-				disk_server.set_socket(connfd);
-				disk_server.user_login();
-
-				disk_server.disk_recvcmd();
-				while(strcmp(disk_server.get_resp(),"quit") != 0)
-				{
-					
-				}
-			}
-			else
-			{
-				close(connfd);
-			}
-
-		}
-	}
-
-	return 0;
+	return m_recmd;
 }
-
-
 
 
 

@@ -2,9 +2,11 @@
 #define HEAD_H_
 
 #include <iostream>
+#include <fstream>
 #include <exception>
 #include <string.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <mysql/mysql.h>
 #include <sys/socket.h>
@@ -16,6 +18,8 @@
 #include <arpa/inet.h>
 
 #define BUFFER_SIZE 256
+
+const char* path = "/root/online_disk.1.1/server/user_file";
 
 using namespace std;
 
@@ -32,13 +36,15 @@ class SDisk
 
 		int disk_pwd();//显示当前目录
 
-		int disk_cd();//更改目录
+		int disk_cd(const char* dir);//更改目录
 
 		int disk_cdup();//返回上层目录
 
 		int disk_mkdir();//创建目录
 
-		int disk_rmdir();//删除目录
+		int disk_rmdir(const char* dir);//删除目录
+
+		int disk_rmfile(const char* file);//删除文件
 
 		int disk_upload();//上传文件
 
@@ -52,6 +58,8 @@ class SDisk
 		void set_socket(int socket);
 
 		char* get_resp();
+
+		char* get_recmd();
 	private:
 		char user_name[32];//用户名
 
@@ -60,6 +68,8 @@ class SDisk
 		int mysocket;//socket id
 
 		char m_cmd[BUFFER_SIZE];//存放指令
+
+		char m_recmd[32];//存放返回命令
 
 		char m_resp[BUFFER_SIZE];//存放返回语句
 };
